@@ -27,8 +27,8 @@ pred Time.end[]{
 run end for 3 but 1 Time
 
 pred transition[t, t': Time] {
-	rdt_send[t.sender, t'.sender, t.link, t'.link]
-	or rdt_rcv[t.receiver, t'.receiver, t.link, t'.link]
+	(rdt_send[t.sender, t'.sender, t.link, t'.link] and t.receiver=t'.receiver)
+	or (rdt_rcv[t.receiver, t'.receiver, t.link, t'.link] and t.sender=t'.sender)
 }
 
 pred traces {
@@ -38,6 +38,6 @@ pred traces {
 }
 
 
-run traces for 3 but 2 Data, 2 Packet
+run traces for 3 but 1 Data, 1 Packet
 
 
