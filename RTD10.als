@@ -11,7 +11,6 @@ sig Time {
 	link: Link
 }
 
-
 pred Time.init[]{
 	this.sender.init[]
 	this.link.empty[]	
@@ -34,10 +33,19 @@ pred transition[t, t': Time] {
 pred traces {
 	first[].init[]
 	all t : Time - last[] | transition[t, t.next[]]
+}
+
+pred possibleReliabe {
+	traces
 	last[].end[]
 }
 
+run possibleReliabe for 3 but 1 Data, 1 Packet
 
-run traces for 3 but 1 Data, 1 Packet
+assert alwaysReliable {
+	(#(Data->first[] +Data->last[])<#Time and traces)
+		 => 	last[].end[]
+}
 
+check alwaysReliable  for 8
 
