@@ -20,3 +20,12 @@ pred Sender.end[] {
 }
 
 run init
+
+pred rdt_send[s, s': Sender, l, l' : Link] {
+	s.sstate = s'.sstate
+	one d : s.buffer | one p : Packet | (
+		make_pkt[d, p] and
+		s.buffer - d = s'.buffer and
+		l.packets + p = l'.packets
+	)
+}

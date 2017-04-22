@@ -25,3 +25,9 @@ pred Time.end[]{
 }
 run end for 3 but 1 Time
 
+pred transition[t, t': Time] {
+	rdt_send[t.sender, t'.sender, t.link, t'.link]
+	or rdt_rcv[t.receiver, t'.receiver, t.link, t'.link]
+}
+
+run transition for 3 but 2 Time, 2 Data, 2 Packet

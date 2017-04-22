@@ -20,3 +20,12 @@ pred Receiver.end[] {
 }
 
 run init
+
+pred rdt_rcv[r, r': Receiver, l, l' : Link] {
+	r.rstate = r'.rstate
+	one p : l.packets | one d : Data | (
+		extract[p, d] and
+		r.buffer + d = r'.buffer and
+		l.packets - p = l'.packets
+	)
+}
