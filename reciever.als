@@ -5,7 +5,7 @@ abstract sig RState {}
 one sig WaitForCallFromBelow extends RState {}
 
 sig Reciever {
-	buffer: Data,
+	buffer: set Data,
 	rstate: RState
 }
 
@@ -18,3 +18,5 @@ pred Reciever.end[] {
 	this.buffer = Data
 	this.rstate = WaitForCallFromBelow
 }
+
+run init

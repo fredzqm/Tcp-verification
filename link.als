@@ -18,3 +18,4 @@ pred udt_rcv[l, l': Link, p : Packet] {
 pred Link.empty[] {
 	this.packets = none
 }
+run empty

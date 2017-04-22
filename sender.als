@@ -5,7 +5,7 @@ abstract sig SState {}
 one sig WaitForCallFromAbove extends SState {}
 
 sig Sender {
-	buffer: Data,
+	buffer: set Data,
 	sstate: SState
 }
 
@@ -18,3 +18,5 @@ pred Sender.end[] {
 	this.buffer = none
 	this.sstate = WaitForCallFromAbove
 }
+
+run init
