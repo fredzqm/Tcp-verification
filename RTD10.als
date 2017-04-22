@@ -11,6 +11,7 @@ sig Time {
 	link: Link
 }
 
+
 pred Time.init[]{
 	this.sender.init[]
 	this.link.empty[]	
@@ -30,4 +31,13 @@ pred transition[t, t': Time] {
 	or rdt_rcv[t.receiver, t'.receiver, t.link, t'.link]
 }
 
-run transition for 3 but 2 Time, 2 Data, 2 Packet
+pred traces {
+	first[].init[]
+	all t : Time - last[] | transition[t, t.next[]]
+	last[].end[]
+}
+
+
+run traces for 3 but 2 Data, 2 Packet
+
+
