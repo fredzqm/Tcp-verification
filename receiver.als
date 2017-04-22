@@ -1,20 +1,20 @@
-module reciever
-open packet
+module receiver
+open link
 
 abstract sig RState {}
 one sig WaitForCallFromBelow extends RState {}
 
-sig Reciever {
+sig Receiver {
 	buffer: set Data,
 	rstate: RState
 }
 
-pred Reciever.init[] {
+pred Receiver.init[] {
 	this.buffer = none
 	this.rstate = WaitForCallFromBelow
 }
 
-pred Reciever.end[] {
+pred Receiver.end[] {
 	this.buffer = Data
 	this.rstate = WaitForCallFromBelow
 }

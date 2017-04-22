@@ -1,5 +1,5 @@
 module sender
-open packet
+open link
 
 abstract sig SState {}
 one sig WaitForCallFromAbove extends SState {}
