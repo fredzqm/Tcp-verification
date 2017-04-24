@@ -43,9 +43,8 @@ pred possibleReliabe {
 run possibleReliabe for 3 but 1 Data, 1 Packet
 
 assert alwaysReliable {
-	traces
-		 => 	last[].end[]
+	traces =>	last[].end[]
 }
 
-check alwaysReliable  for 8
+check alwaysReliable  for 3 but 11 Time, 5 Data
 
