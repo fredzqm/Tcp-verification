@@ -74,6 +74,7 @@ pred recieveData[t, t': Time] {
 			t.rbuffer + p.data = t'.rbuffer and
 			make_pkt[ACK, t'.back]
 		) else (
+			t.rbuffer = t'.rbuffer and
 			make_pkt[NAK, t'.back]
 		)
 	}
@@ -119,7 +120,6 @@ pred corruptData[t, t': Time] {
 // all valid transition with something happening
 pred transition[t, t': Time] {
 	sendData[t, t'] or
-	corruptData[t, t'] or
 	recieveACK[t, t'] or
 	recieveData[t, t']
 }
@@ -127,7 +127,9 @@ pred transition[t, t': Time] {
 // traces of the system
 pred traces {
 	first[].init[]
-	all t : Time - last[] | transition[t, t.next[]]
+	all t : Time - last[] | transition[t, t.next[]] or corruptData[t, t.next[]]
+// extra constraint to make sure it does not corrput all the time
+	all t : Time - last[] - last[].prev[] | corruptData[t, t.next[]] => not corruptData[t.next[], t.next[].next[]]
 }
 
 pred possibleReliabe {
@@ -141,7 +143,6 @@ assert alwaysReliable {
 }
 
 check alwaysReliable  for 5 but exactly 8 Time, 1 RealData
-
 
 
 //M1:Comment
