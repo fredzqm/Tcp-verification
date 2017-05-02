@@ -137,8 +137,14 @@ run possibleReliabe for 7 but exactly 1 RealData
 assert alwaysReliable {
 	traces =>	last[].end[]
 }
+
+check alwaysReliable  for 5 but exactly 8 Time, 1 RealData
+
+
+
+//M1:Comment
 // produce a counter example, because there is not enough time elapsed
-check alwaysReliable  for 5 but exactly 10 Time, 5 RealData
+
 // produces no counter example, because all packets eventually arrive
-check alwaysReliable  for 5 but exactly 11 Time, 5 RealData
+//check alwaysReliable  for 5 but exactly 11 Time, 5 RealData
 
