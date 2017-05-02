@@ -68,6 +68,7 @@ pred recieveData[t, t': Time] {
 	t.to != none
 	t'.to = none
 	t.back = none
+	t'.lastData = t.lastData
 	let p = t.to | {
 		p.NOTcorrupt[] => (
 			t.rbuffer + p.data = t'.rbuffer and
@@ -95,7 +96,8 @@ pred recieveACK[t, t': Time] {
 		)) and
 		(p.isACK[] => (
 			t'.to = none and
-			t'.sstate = WaitForCallFromAbove
+			t'.sstate = WaitForCallFromAbove and
+			t'.lastData = none
 		))
 	}
 	t.sbuffer = t'.sbuffer
