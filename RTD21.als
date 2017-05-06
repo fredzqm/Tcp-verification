@@ -52,14 +52,26 @@ fact{
 		d.checksum!=d'.checksum		
 }
 
-sig RealData extends Data {}
-one sig ACK extends Data {}
-one sig NAK extends Data {}
+// model data corruption so it can only corrupt once in one transmission
+sig CorruptedData extends Data {}
+sig GoodData extends Data {}
+sig RealData extends GoodData {}
+one sig ACK extends GoodData {}
+one sig NAK extends GoodData {}
 
 sig Packet {
 	data: Data,
 	seg: Seq,
 	checksum: CheckSum
+}
+
+pred Time.corrupt[p, p' : Packet] {
+	p != none
+	p' != none
+	p.data in GoodData
+	p'.data in CorruptedData
+	this.corruptData=p.data
+	p.checksum = p'.checksum
 }
 
 pred make_pkt[segT : Seq, d : Data, p : Packet] {
@@ -81,12 +93,6 @@ pred Packet.isACK[]{
 	this.data = ACK
 }
 
-pred corrupt[p, p' : Packet] {
-	p != none
-	p != p'
-	p' != none
-}
-
 pred Packet.NOTcorrupt[]{
 	this.checksum = this.data.checksum
 }
@@ -99,7 +105,8 @@ sig Time {
 	rbuffer: set RealData,
 	rstate: RState,
 	to: lone Packet,
-	back: lone Packet
+	back: lone Packet,
+	corruptData: lone GoodData
 }
 
 // beginning of the system
@@ -110,6 +117,7 @@ pred Time.init[]{
 	this.rstate.seg3 =Zero
 	this.to = none
 	this.back = none
+	this.lastData = none
 }
 run init for 3 but 1 Time, 3 Data
 
@@ -122,6 +130,7 @@ pred Time.end[]{
 	this.sstate.seg1 = this.rstate.seg3
 	this.to = none
 	this.back = none
+	this.lastData = none
 }
 run end for 3 but 1 Time, 3 Data
 
@@ -174,6 +183,7 @@ run recieveData for 3 but 2 Time
 // date recieved from the link
 pred recieveACK[t, t': Time] {
 	t.sstate in WaitForACKorNAK
+	t.rstate = t'.rstate
 	t.to = none
 	t.back != none
 	t'.back = none
@@ -201,7 +211,7 @@ pred corruptData[t, t': Time] {
 	t.lastData = t'.lastData
 	t.sbuffer = t'.sbuffer
 	t.rbuffer = t'.rbuffer
-	corrupt[t.to, t'.to]
+	t.corrupt[t.to, t'.to]
 	t.back = t'.back
 }
 
@@ -213,14 +223,17 @@ pred corruptACK[t, t': Time] {
 	t.sbuffer = t'.sbuffer
 	t.rbuffer = t'.rbuffer
 	t.to = t'.to
-	corrupt[t.back, t'.back]
+	t.corrupt[t.back, t'.back]
 }
 
 // all valid transition with something happening
 pred transition[t, t': Time] {
-	sendData[t, t'] or
-	recieveACK[t, t'] or
-	recieveData[t, t']
+	t.corruptData = none and
+	(
+		sendData[t, t'] or
+		recieveACK[t, t'] or
+		recieveData[t, t']
+	)
 }
 
 // traces of the system
@@ -228,7 +241,6 @@ pred traces {
 	first[].init[]
 	all t : Time - last[] | transition[t, t.next[]]  or corruptData[t, t.next[]] or corruptACK[t, t.next[]]
 // extra constraint to make sure it does not corrput all the time
-	all t : Time - last[] - last[].prev[] | corruptData[t, t.next[]] => not corruptData[t.next[], t.next[].next[]]
 }
 
 pred possibleReliabe {
@@ -240,8 +252,7 @@ run possibleReliabe for 10 but 7 Time, exactly 1 RealData
 assert alwaysReliable {
 	traces =>	last[].end[]
 }
-
-// check alwaysReliable  for 5 but exactly 8 Time, 1 RealData
+check alwaysReliable  for 5 but exactly 8 Time, 1 RealData
 
 
 //M1:Comment
