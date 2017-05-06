@@ -254,6 +254,12 @@ assert alwaysReliable {
 }
 check alwaysReliable  for 5 but exactly 8 Time, 1 RealData
 
+assert alwaysReliableWithMaxOneCorruptionPerData {
+	( (all d : GoodData | lone corruptData.d) and  traces) =>	last[].end[]
+}
+check alwaysReliableWithMaxOneCorruptionPerData for 5 but 9 Time, 1 RealData
+check alwaysReliableWithMaxOneCorruptionPerData for 5 but 10 Time, 1 RealData
+
 
 //M1:Comment
 // produce a counter example, because there is not enough time elapsed
