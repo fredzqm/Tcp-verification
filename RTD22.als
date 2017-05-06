@@ -1,4 +1,4 @@
-module RTD21
+module RTD22
 open util/ordering[Time]
 
 // model sequence number
