@@ -205,6 +205,17 @@ pred corruptData[t, t': Time] {
 	t.back = t'.back
 }
 
+// model the corruption of data in the link
+pred corruptACK[t, t': Time] {
+	t.sstate = t'.sstate
+	t.rstate = t'.rstate
+	t.lastData = t'.lastData
+	t.sbuffer = t'.sbuffer
+	t.rbuffer = t'.rbuffer
+	t.to = t'.to
+	corrupt[t.back, t'.back]
+}
+
 // all valid transition with something happening
 pred transition[t, t': Time] {
 	sendData[t, t'] or
@@ -215,19 +226,16 @@ pred transition[t, t': Time] {
 // traces of the system
 pred traces {
 	first[].init[]
-	all t : Time - last[] | transition[t, t.next[]]  // or corruptData[t, t.next[]]
+	all t : Time - last[] | transition[t, t.next[]]  or corruptData[t, t.next[]] or corruptACK[t, t.next[]]
 // extra constraint to make sure it does not corrput all the time
-//	all t : Time - last[] - last[].prev[] | corruptData[t, t.next[]] => not corruptData[t.next[], t.next[].next[]]
+	all t : Time - last[] - last[].prev[] | corruptData[t, t.next[]] => not corruptData[t.next[], t.next[].next[]]
 }
 
 pred possibleReliabe {
-	traces	
-//	some t : Time - last[] | sendData[t, t.next[]]
-//	some t : Time - last[] | recieveACK[t, t.next[]]
-//	some t : Time - last[] | recieveData[t, t.next[]]
-//	some t : Time | t.end[]
+	traces
+	some t : Time | t.end[]
 }
-run possibleReliabe for 10 but 4 Time, exactly 1 RealData
+run possibleReliabe for 10 but 7 Time, exactly 1 RealData
 
 assert alwaysReliable {
 	traces =>	last[].end[]
