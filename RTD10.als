@@ -2,14 +2,31 @@ module RTD10
 open util/ordering[Time]
 open packet
 
+abstract sig Seq {}
+one sig One extends Seq {}
+one sig Zero extends Seq	 {}
+
 // modeling sender state
 abstract sig SState {}
-one sig WaitForCallFromAbove extends SState {}
-one sig WaitForACKorNAK extends SState {}
+sig WaitForCallFromAbove extends SState {
+	seg1: Seq
+}
+sig WaitForACKorNAK extends SState {
+	seg2: Seq
+}
 
 // modeling reciever state
 abstract sig RState {}
-one sig WaitForCallFromBelow extends RState {}
+sig WaitForFromBelow extends RState {
+	seg3: Seq
+}
+
+// ensuring that two distinct State must has different sequence number
+fact stateConstrait {
+	all disjoint a, b : WaitForCallFromAbove | a.seg1 != b.seg1
+	all disjoint a, b : WaitForACKorNAK | a.seg2 != b.seg2
+	all disjoint a, b : WaitForFromBelow | a.seg3 != b.seg3
+}
 
 // modeling time or state of the system
 sig Time {
@@ -25,9 +42,9 @@ sig Time {
 // beginning of the system
 pred Time.init[]{
 	this.sbuffer = RealData
-	this.sstate = WaitForCallFromAbove
+	this.sstate.seg1=Zero
 	this.rbuffer = none
-	this.rstate = WaitForCallFromBelow
+	this.rstate.seg3 =Zero
 	this.to = none
 	this.back = none
 }
@@ -38,7 +55,8 @@ pred Time.end[]{
 	this.sbuffer = none
 	this.sstate = WaitForCallFromAbove	
 	this.rbuffer = RealData
-	this.rstate = WaitForCallFromBelow
+	this.rstate = WaitForFromBelow
+	this.sstate.seg1 = this.rstate.seg3
 	this.to = none
 	this.back = none
 }
