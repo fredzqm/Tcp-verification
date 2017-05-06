@@ -4,9 +4,13 @@ open util/ordering[Time]
 // model sequence number
 abstract sig Seq {}
 one sig One extends Seq {}
-one sig Zero extends Seq	 {}
+one sig Zero extends Seq {}
 
 fun Seq.nextSeg[] : Seq {
+	this = One => Zero else One
+}
+
+fun Seq.preSeg[] : Seq {
 	this = One => Zero else One
 }
 
@@ -18,11 +22,11 @@ abstract sig WaitForCallFromAbove extends SState {
 one sig WaitForCallFromAbove1 extends WaitForCallFromAbove {}{seg1 = One}
 one sig WaitForCallFromAbove0 extends WaitForCallFromAbove {}{seg1 = Zero}
 
-abstract sig WaitForACKorNAK extends SState {
+abstract sig WaitForACK extends SState {
 	seg2: Seq
 }
-one sig WaitForACKorNAK1 extends WaitForACKorNAK {}{seg2 = One}
-one sig WaitForACKorNAK0 extends WaitForACKorNAK {}{seg2 = Zero}
+one sig WaitForACK1 extends WaitForACK {}{seg2 = One}
+one sig WaitForACK0 extends WaitForACK {}{seg2 = Zero}
 
 // modeling reciever state
 abstract sig RState {}
@@ -34,8 +38,8 @@ one sig WaitForFromBelow0 extends WaitForFromBelow {}{seg3 = Zero}
 
 // ensuring that two distinct State must has different sequence number
 fact stateConstrait {
-(	all disjoint a, b : WaitForACKorNAK | a.seg2 != b.seg2) and 
-	#WaitForACKorNAK = 2 and 
+(	all disjoint a, b : WaitForACK | a.seg2 != b.seg2) and 
+	#WaitForACK = 2 and 
 (	all disjoint a, b : WaitForCallFromAbove | a.seg1 != b.seg1) and
 	#WaitForCallFromAbove = 2 and 
 (	all disjoint a, b : WaitForFromBelow | a.seg3 != b.seg3) and 
@@ -54,10 +58,9 @@ fact{
 
 // model data corruption so it can only corrupt once in one transmission
 sig CorruptedData extends Data {}
-sig GoodData extends Data {}
+abstract sig GoodData extends Data {}
 sig RealData extends GoodData {}
 one sig ACK extends GoodData {}
-one sig NAK extends GoodData {}
 
 sig Packet {
 	data: Data,
@@ -83,10 +86,6 @@ pred make_pkt[segT : Seq, d : Data, p : Packet] {
 pred extract[p : Packet, d : Data] {
 	p.data = d
 	p.checksum = d.checksum
-}
-
-pred Packet.isNAK[]{
-	this.data = NAK
 }
 
 pred Packet.isACK[]{
@@ -137,7 +136,7 @@ run end for 3 but 1 Time, 3 Data
 // data sent to the link
 pred sendData[t, t': Time] {
 	t.sstate in WaitForCallFromAbove
-	t'.sstate in WaitForACKorNAK
+	t'.sstate in WaitForACK
 	t.sstate.seg1 = t'.sstate.seg2
 	t.rstate = t'.rstate
 	t.to = none
@@ -173,7 +172,7 @@ pred recieveData[t, t': Time] {
 		) else (
 			t.rstate.seg3 = t'.rstate.seg3 and
 			t.rbuffer = t'.rbuffer and
-			make_pkt[p.seg, NAK, t'.back]
+			make_pkt[p.seg.preSeg[], ACK, t'.back]
 		)
 	}
 	t.sbuffer = t'.sbuffer
@@ -182,20 +181,20 @@ run recieveData for 3 but 2 Time
 
 // date recieved from the link
 pred recieveACK[t, t': Time] {
-	t.sstate in WaitForACKorNAK
+	t.sstate in WaitForACK
 	t.rstate = t'.rstate
 	t.to = none
 	t.back != none
 	t'.back = none
 	let p = t.back | {
 		// did not check corruption here
-		(p.NOTcorrupt[] and p.isACK[]) => (
+		(p.NOTcorrupt[] and p.isACK[] and p.seg = t.sstate.seg2) => (
 			t'.to = none and
         	t.sstate.seg2.nextSeg[] = t'.sstate.seg1 and
 			t'.lastData = none
 		) else (
 			t.sstate = t'.sstate and
-			make_pkt[	t.sstate.seg2, t.lastData, t'.to] and
+			make_pkt[ t.sstate.seg2, t.lastData, t'.to] and
 			t'.lastData = t.lastData
 		)
 	}
@@ -247,23 +246,17 @@ pred possibleReliabe {
 	traces
 	some t : Time | t.end[]
 }
-run possibleReliabe for 10 but 7 Time, exactly 1 RealData
+run possibleReliabe for 10 but 7 Time, exactly 2 RealData
 
 assert alwaysReliable {
 	traces =>	last[].end[]
 }
-check alwaysReliable  for 5 but exactly 8 Time, 1 RealData
+check alwaysReliable  for 5 but exactly 16 Time, 2 RealData
 
 assert alwaysReliableWithMaxOneCorruptionPerData {
 	( (all d : GoodData | lone corruptData.d) and  traces) =>	last[].end[]
 }
-check alwaysReliableWithMaxOneCorruptionPerData for 5 but 9 Time, 1 RealData
-check alwaysReliableWithMaxOneCorruptionPerData for 5 but 10 Time, 1 RealData
+check alwaysReliableWithMaxOneCorruptionPerData for 5 but 11 Time, 2 RealData
+check alwaysReliableWithMaxOneCorruptionPerData for 5 but 12 Time, 2 RealData
 
-
-//M1:Comment
-// produce a counter example, because there is not enough time elapsed
-
-// produces no counter example, because all packets eventually arrive
-//check alwaysReliable  for 5 but exactly 11 Time, 5 RealData
 
