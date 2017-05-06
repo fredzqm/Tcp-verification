@@ -251,7 +251,7 @@ run possibleReliabe for 10 but 7 Time, exactly 2 RealData
 assert alwaysReliable {
 	traces =>	last[].end[]
 }
-check alwaysReliable  for 5 but exactly 16 Time, 2 RealData
+check alwaysReliable  for 5 but exactly 10 Time, 1 RealData
 
 assert alwaysReliableWithMaxOneCorruptionPerData {
 	( (all d : GoodData | lone corruptData.d) and  traces) =>	last[].end[]
