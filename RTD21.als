@@ -54,7 +54,7 @@ fact{
 
 // model data corruption so it can only corrupt once in one transmission
 sig CorruptedData extends Data {}
-sig GoodData extends Data {}
+abstract sig GoodData extends Data {}
 sig RealData extends GoodData {}
 one sig ACK extends GoodData {}
 one sig NAK extends GoodData {}
@@ -252,18 +252,13 @@ run possibleReliabe for 10 but 7 Time, exactly 1 RealData
 assert alwaysReliable {
 	traces =>	last[].end[]
 }
-check alwaysReliable  for 5 but exactly 8 Time, 1 RealData
+check alwaysReliable  for 5 but exactly 8 Time, 2 RealData
 
 assert alwaysReliableWithMaxOneCorruptionPerData {
 	( (all d : GoodData | lone corruptData.d) and  traces) =>	last[].end[]
 }
-check alwaysReliableWithMaxOneCorruptionPerData for 5 but 9 Time, 1 RealData
-check alwaysReliableWithMaxOneCorruptionPerData for 5 but 10 Time, 1 RealData
+check alwaysReliableWithMaxOneCorruptionPerData for 5 but 10 Time, 2 RealData
+check alwaysReliableWithMaxOneCorruptionPerData for 5 but 11 Time, 2 RealData
 
 
-//M1:Comment
-// produce a counter example, because there is not enough time elapsed
-
-// produces no counter example, because all packets eventually arrive
-//check alwaysReliable  for 5 but exactly 11 Time, 5 RealData
 
